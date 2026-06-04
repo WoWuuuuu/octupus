@@ -5,14 +5,14 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "octopus"
 version = "0.1.0"
-description = "Octopus - Decision-Execution Layer Separation Architecture (Spice-inspired)"
+description = "Octopus - Decision-Execution Layer Separation Architecture"
 readme = "README.md"
 requires-python = ">=3.10"
 license = {text = "MIT"}
 authors = [
     {name = "Octopus Team"}
 ]
-keywords = ["decision-making", "agent-architecture", "slow-thinking", "world-model", "spice-architecture"]
+keywords = ["decision-making", "agent-architecture", "slow-thinking", "world-model"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",

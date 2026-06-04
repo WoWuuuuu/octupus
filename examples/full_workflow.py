@@ -422,7 +422,6 @@ def demonstrate_full_workflow():
 def main():
     print("\n" + "="*60)
     print("OCTOPUS ARCHITECTURE DEMONSTRATION")
-    print("Decision-Execution Layer Separation (Spice-Inspired)")
     print("="*60)
     
     demonstrate_perception()
