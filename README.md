@@ -5,7 +5,6 @@
 ## 核心架构
 
 ### 决策层（Slow Thinking - 缓慢思考）
-
 - **World Model**: 世界状态建模
 - **Perception Module**: 意图感知和解析
 - **Simulation Engine**: 未来场景模拟
@@ -14,7 +13,6 @@
 - **Ethics Framework**: 价值体系和伦理框架
 
 ### 执行层（Fast Thinking - 快速思考）
-
 - **Tool Registry**: 工具注册和管理
 - **Execution Layer**: 纯工具执行
 - **ODEP Protocol**: 层间通信协议
@@ -40,7 +38,6 @@ python -m octopus.cli
 ```
 
 在CLI中你可以使用以下命令：
-
 - `status` - 查看系统状态
 - `perceive <input>` - 处理输入
 - `decide <context>` - 做决策
