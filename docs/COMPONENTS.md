@@ -140,7 +140,144 @@
 
 ---
 
-## 4. 数据结构规范
+## 4. 执行器组件
+
+### 🚀 ExecutorManager (执行器管理器)
+- **职责**：管理多种执行器的注册、选择和调度。
+- **关键方法**：
+  - `register_executor(executor)`：注册执行器
+  - `get_executor(executor_id)`：获取执行器
+  - `get_default_executor()`：获取默认执行器
+  - `execute(intent)`：执行任务
+  - `list_executors()`：列出所有执行器
+  - `get_health_summary()`：获取健康摘要
+
+### 🖥️ LocalExecutor (本地执行器)
+- **职责**：在本地执行任务，支持Python代码、Shell命令、文件读写等。
+- **关键方法**：
+  - `execute_python(code)`：执行Python代码
+  - `execute_shell(command)`：执行Shell命令
+  - `execute_file_read(filepath)`：读取文件
+  - `execute_file_write(filepath, content)`：写入文件
+
+### 🌐 RemoteExecutor (远程执行器)
+- **职责**：通过SSH执行远程任务。
+- **关键方法**：
+  - `execute_remote(command)`：执行远程命令
+
+### 🐳 DockerExecutor (Docker执行器)
+- **职责**：在Docker容器中执行任务。
+- **关键方法**：
+  - `execute_in_container(command)`：在容器中执行命令
+
+### 数据结构
+- **ExecutorType**: LOCAL, REMOTE, DOCKER
+- **ExecutorStatus**: STOPPED, RUNNING, PAUSED, ERROR
+- **ExecutorConfig**: 包含executor_id、executor_type、host、port、timeout等。
+- **ExecutionJob**: 包含job_id、intent_id、executor_id、status、result等。
+
+---
+
+## 5. LLM提供商组件
+
+### 🤖 LLMProviderManager (LLM提供商管理器)
+- **职责**：管理多种LLM提供商的注册和切换。
+- **关键方法**：
+  - `register_provider(provider)`：注册提供商
+  - `get_provider(provider_id)`：获取提供商
+  - `get_default_provider()`：获取默认提供商
+  - `chat(messages)`：调用聊天接口
+  - `complete(prompt)`：调用补全接口
+  - `embeddings(text)`：获取文本嵌入
+
+### 🔑 OpenAIProvider (OpenAI提供商)
+- **职责**：集成OpenAI API。
+
+### 🔷 AnthropicProvider (Anthropic提供商)
+- **职责**：集成Anthropic API。
+
+### 🟢 GoogleProvider (Google提供商)
+- **职责**：集成Google Gemini API。
+
+### 数据结构
+- **LLMProviderType**: OPENAI, ANTHROPIC, GOOGLE, MOCK
+- **ChatRole**: SYSTEM, USER, ASSISTANT, TOOL
+- **ChatMessage**: 包含role、content、tool_calls、tool_response等。
+- **LLMResponse**: 包含content、finish_reason、usage、model等。
+- **LLMConfig**: 包含provider_type、api_key、model、temperature等。
+
+---
+
+## 6. 感知轮询组件
+
+### 👀 FileSystemPoller (文件系统轮询器)
+- **职责**：检测文件系统变化（创建、修改、删除）。
+- **关键方法**：
+  - `start()`：启动轮询
+  - `stop()`：停止轮询
+  - `pause()`：暂停轮询
+  - `resume()`：恢复轮询
+  - `get_changes(limit)`：获取变化记录
+  - `add_callback(callback)`：添加变化回调
+  - `remove_callback(callback)`：移除回调
+
+### 📚 GitPoller (Git轮询器)
+- **职责**：检测Git仓库变化。
+- **关键方法**：
+  - `detect_changes()`：检测Git变化
+
+### 🏢 WorkspacePoller (工作区轮询器)
+- **职责**：统一管理文件系统和Git轮询。
+- **关键方法**：
+  - `start_all()`：启动所有轮询器
+  - `stop_all()`：停止所有轮询器
+  - `get_status()`：获取所有轮询器状态
+
+### 数据结构
+- **PollingStatus**: STOPPED, RUNNING, PAUSED
+- **ChangeType**: CREATED, MODIFIED, DELETED, RENAMED
+- **WorkspaceChange**: 包含change_type、path、old_path、timestamp等。
+- **PollingConfig**: 包含poll_interval、exclude_patterns、max_history等。
+
+---
+
+## 7. 辅助工具组件
+
+### 👨‍⚕️ Doctor (系统诊断工具)
+- **职责**：从系统环境、依赖、配置、网络等方面进行健康检查。
+- **检查器类型**：
+  - `SystemChecker`: 系统环境检查
+  - `DependencyChecker`: 依赖检查
+  - `ConfigurationChecker`: 配置检查
+  - `NetworkChecker`: 网络检查
+- **关键方法**：
+  - `run_all()`：运行所有检查
+  - `run_checker(checker_name)`：运行指定检查
+  - `get_summary()`：获取诊断摘要
+  - `format_json()`：JSON格式输出
+  - `format_text()`：文本格式输出
+  - `format_rich()`：Rich格式输出
+
+### 数据结构
+- **CheckStatus**: PASS, WARN, FAIL
+- **CheckResult**: 包含checker_name、check_name、status、details、suggestion等。
+
+### 🚀 Quickstart (项目脚手架)
+- **职责**：提供项目模板，支持快速初始化Octopus项目。
+- **模板类型**：
+  - `basic`: 基础模板
+  - `advanced`: 高级模板
+- **关键方法**：
+  - `list_templates()`：列出所有模板
+  - `get_template_details(template_name)`：获取模板详情
+  - `create_project(project_name, template)`：创建新项目
+
+### 数据结构
+- **ProjectTemplate**: 包含name、description、variables、files等。
+
+---
+
+## 8. 数据结构规范
 
 ### Entity (实体定义)
 ```python

@@ -23,6 +23,21 @@ from execution.executor import (
     ExecutionState,
 )
 
+from execution.base import (
+    BaseExecutor,
+    ExecutorConfig,
+    ExecutorStatus,
+    ExecutorType,
+    ExecutionJob,
+)
+
+from execution.executors import (
+    LocalExecutor,
+    RemoteExecutor,
+    DockerExecutor,
+    ExecutorManager,
+)
+
 __all__ = [
     "ToolRegistry",
     "Tool",
@@ -37,4 +52,13 @@ __all__ = [
     "ExecutionPlan",
     "ExecutionTask",
     "ExecutionState",
+    "BaseExecutor",
+    "ExecutorConfig",
+    "ExecutorStatus",
+    "ExecutorType",
+    "ExecutionJob",
+    "LocalExecutor",
+    "RemoteExecutor",
+    "DockerExecutor",
+    "ExecutorManager",
 ]

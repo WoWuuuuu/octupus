@@ -6,7 +6,7 @@
 
 ## 📦 版本
 
-**v0.3.1** - 完成阶段二：会话管理系统、批准机制、决策比较功能
+**v0.4** - 完成阶段三：多执行器集成、多LLM提供商支持、感知轮询、系统诊断工具、项目脚手架
 
 ---
 
@@ -69,6 +69,26 @@ python -m pytest tests/ -v
 | `decide <goal>` | 做出决策 |
 | `compare <goal1> <goal2> [...]` | 对比多个决策 |
 
+### 执行器管理
+| 命令 | 说明 |
+|------|------|
+| `executor list` | 列出所有执行器 |
+| `executor status <executor_id>` | 查看执行器状态 |
+| `executor health` | 执行器健康检查 |
+| `executor default <executor_id>` | 设置默认执行器 |
+
+### 系统诊断
+| 命令 | 说明 |
+|------|------|
+| `doctor run` | 运行系统健康检查 |
+| `doctor summary` | 查看诊断摘要 |
+
+### 项目脚手架
+| 命令 | 说明 |
+|------|------|
+| `quickstart list` | 列出项目模板 |
+| `quickstart create <name> [template]` | 创建新项目 |
+
 ### 会话管理
 | 命令 | 说明 |
 |------|------|
@@ -122,6 +142,27 @@ python -m pytest tests/ -v
 - **Transport Layer**: 传输层实现
 - **Protocol Adapter**: v0/v1协议适配
 
+### 执行器模块
+- **ExecutorManager**: 执行器管理器
+- **LocalExecutor**: 本地执行器
+- **RemoteExecutor**: 远程执行器
+- **DockerExecutor**: Docker执行器
+
+### LLM提供商
+- **LLMProviderManager**: LLM提供商管理器
+- **OpenAIProvider**: OpenAI提供商
+- **AnthropicProvider**: Anthropic提供商
+- **GoogleProvider**: Google提供商
+
+### 感知轮询
+- **FileSystemPoller**: 文件系统变化检测
+- **GitPoller**: Git仓库变化检测
+- **WorkspacePoller**: 统一工作区轮询管理
+
+### 辅助工具
+- **Doctor**: 系统健康诊断工具
+- **Quickstart**: 项目脚手架初始化
+
 ---
 
 ## 📁 项目结构
@@ -137,10 +178,16 @@ octopus/
 │   ├── ethics.py          # 伦理框架
 │   ├── decision_card.py   # 决策卡片渲染
 │   ├── session.py         # 会话管理系统
-│   └── approval.py        # 批准机制
+│   ├── approval.py        # 批准机制
+│   └── llm_provider.py    # LLM提供商抽象与实现
 ├── perception/             # 工作区感知模块
 │   ├── __init__.py
-│   └── workspace.py       # 工作区感知实现
+│   ├── workspace.py       # 工作区感知实现
+│   └── poller.py          # 感知轮询模块
+├── execution/             # 执行器模块
+│   ├── __init__.py
+│   ├── base.py            # 执行器抽象接口
+│   └── executors.py       # 多种执行器实现
 ├── protocol/              # 通信协议
 │   ├── __init__.py
 │   └── v1/                # ODEP v1.0协议
@@ -152,7 +199,9 @@ octopus/
 │       └── adapters.py    # v0/v1适配器
 ├── octopus/               # CLI框架
 │   ├── __init__.py
-│   └── cli.py            # 命令行界面
+│   ├── cli.py            # 命令行界面
+│   ├── doctor.py         # 系统诊断工具
+│   └── quickstart.py     # 项目脚手架
 ├── demo/                  # 示例脚本
 ├── tests/                 # 测试用例
 ├── docs/                  # 文档
@@ -182,3 +231,10 @@ octopus/
 - 会话管理系统
 - 批准机制
 - 决策比较功能
+
+### v0.4 - 扩展能力
+- 多执行器集成（本地、远程、Docker）
+- 多LLM提供商支持（OpenAI、Anthropic、Google）
+- 感知轮询模式（文件系统、Git仓库变化检测）
+- Doctor系统诊断工具
+- Quickstart项目脚手架
