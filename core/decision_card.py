@@ -2,6 +2,7 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 from enum import Enum
 import json
+from datetime import datetime
 
 from rich.console import Console
 from rich.panel import Panel
@@ -273,3 +274,129 @@ class DecisionCardRenderer:
             constraints=decision.constraints,
             metadata=decision.metadata,
         )
+
+
+class DecisionComparator:
+    def __init__(self, console: Optional[Console] = None):
+        self.console = console or Console()
+
+    def compare(self, cards: List[DecisionCard], format: OutputFormat = OutputFormat.RICH) -> str:
+        if format == OutputFormat.TEXT:
+            return self._compare_text(cards)
+        elif format == OutputFormat.JSON:
+            return self._compare_json(cards)
+        elif format == OutputFormat.RICH:
+            self._compare_rich(cards)
+            return ""
+
+    def _compare_text(self, cards: List[DecisionCard]) -> str:
+        lines = []
+        lines.append("=" * 80)
+        lines.append(f"DECISION COMPARISON - {len(cards)} Decisions")
+        lines.append("=" * 80)
+
+        for i, card in enumerate(cards, 1):
+            lines.append("")
+            lines.append(f"--- Decision {i}: {card.decision_id} ---")
+            lines.append(f"Goal: {card.goal}")
+            lines.append(f"Status: {card.status}")
+            lines.append(f"Confidence: {card.confidence:.2%}")
+            selected = card.selected_option.name if card.selected_option else "None"
+            lines.append(f"Selected: {selected}")
+            if card.options:
+                avg_score = sum(opt.total_score for opt in card.options) / len(card.options)
+                lines.append(f"Avg Option Score: {avg_score:.2f}")
+            lines.append(f"Options Count: {len(card.options)}")
+
+        lines.append("")
+        lines.append("=" * 80)
+        return "\n".join(lines)
+
+    def _compare_json(self, cards: List[DecisionCard]) -> str:
+        comparison = {
+            "comparison_id": f"compare_{datetime.now().timestamp()}",
+            "compared_at": datetime.now().isoformat(),
+            "total_decisions": len(cards),
+            "decisions": [card.to_dict() for card in cards],
+            "summary": self._generate_summary(cards),
+        }
+        return json.dumps(comparison, indent=2, ensure_ascii=False)
+
+    def _compare_rich(self, cards: List[DecisionCard]):
+        header = Panel(
+            f"[bold]Total Decisions:[/bold] {len(cards)}\n"
+            f"[bold]Compared At:[/bold] {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
+            title="Decision Comparison",
+            style="purple",
+            width=100,
+        )
+        self.console.print(header)
+
+        summary = self._generate_summary(cards)
+        summary_table = Table(title="Comparison Summary")
+        summary_table.add_column("Metric", style="cyan", width=30)
+        summary_table.add_column("Value", style="green", width=70)
+
+        for key, value in summary.items():
+            if isinstance(value, float):
+                summary_table.add_row(key, f"{value:.2f}")
+            else:
+                summary_table.add_row(key, str(value))
+        self.console.print(summary_table)
+
+        comparison_table = Table(title="Decision Details")
+        comparison_table.add_column("Decision ID", style="cyan", width=35)
+        comparison_table.add_column("Goal", style="blue", width=30)
+        comparison_table.add_column("Selected", style="green", width=20)
+        comparison_table.add_column("Confidence", style="magenta", width=15)
+        comparison_table.add_column("Options", style="yellow", width=10)
+
+        for card in cards:
+            selected = card.selected_option.name[:18] if card.selected_option else "None"
+            comparison_table.add_row(
+                card.decision_id,
+                card.goal[:28],
+                selected,
+                f"{card.confidence:.2%}",
+                str(len(card.options)),
+            )
+        self.console.print(comparison_table)
+
+        for card in cards:
+            if card.selected_option:
+                self.console.print("")
+                self.console.print(f"[bold underline]{card.decision_id}[/bold underline]")
+                self.console.print(f"[bold]Goal:[/bold] {card.goal}")
+                self.console.print(f"[bold]Selected Option:[/bold] {card.selected_option.name}")
+                self.console.print(f"[bold]Score:[/bold] {card.selected_option.total_score:.2f}")
+                self.console.print(f"[bold]Risk:[/bold] {card.selected_option.risk_level:.2f}")
+                self.console.print(f"[bold]Reversibility:[/bold] {card.selected_option.reversibility:.2f}")
+
+    def _generate_summary(self, cards: List[DecisionCard]) -> Dict[str, Any]:
+        if not cards:
+            return {}
+
+        total_options = sum(len(card.options) for card in cards)
+        avg_options = total_options / len(cards)
+
+        total_confidence = sum(card.confidence for card in cards)
+        avg_confidence = total_confidence / len(cards)
+
+        selected_count = sum(1 for card in cards if card.selected_option)
+        avg_score = 0.0
+        if selected_count > 0:
+            selected_scores = [card.selected_option.total_score for card in cards if card.selected_option]
+            avg_score = sum(selected_scores) / selected_count
+
+        completed_count = sum(1 for card in cards if card.status == "decided")
+
+        return {
+            "total_decisions": len(cards),
+            "total_options": total_options,
+            "average_options_per_decision": avg_options,
+            "average_confidence": avg_confidence,
+            "decisions_with_selection": selected_count,
+            "average_selected_score": avg_score,
+            "completed_decisions": completed_count,
+            "pending_decisions": len(cards) - completed_count,
+        }

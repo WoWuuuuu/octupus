@@ -47,7 +47,21 @@ from core.decision_card import (
     DecisionCard,
     DecisionCardOption,
     DecisionCardRenderer,
+    DecisionComparator,
     OutputFormat,
+)
+from core.session import (
+    Session,
+    SessionStatus,
+    SessionType,
+    SessionEvent,
+    SessionStore,
+)
+from core.approval import (
+    ApprovalLevel,
+    ApprovalPolicy,
+    ApprovalTask,
+    ApprovalManager,
 )
 
 __all__ = [
@@ -83,5 +97,15 @@ __all__ = [
     "DecisionCard",
     "DecisionCardOption",
     "DecisionCardRenderer",
+    "DecisionComparator",
     "OutputFormat",
+    "Session",
+    "SessionStatus",
+    "SessionType",
+    "SessionEvent",
+    "SessionStore",
+    "ApprovalLevel",
+    "ApprovalPolicy",
+    "ApprovalTask",
+    "ApprovalManager",
 ]

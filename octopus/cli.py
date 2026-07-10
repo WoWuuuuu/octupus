@@ -303,6 +303,281 @@ class DecideCommand(Command):
             console.print(f"[red]Decision failed: {result.reasoning}[/red]")
 
 
+class SessionCommand(Command):
+    def __init__(self, session_store):
+        self.session_store = session_store
+
+    def name(self) -> str:
+        return "session"
+
+    def description(self) -> str:
+        return "Session management: session <create/list/show/switch/archive/search>"
+
+    def execute(self, args: List[str]) -> Any:
+        if not args:
+            console.print("[red]Usage: session <create/list/show/switch/archive/search>[/red]")
+            return
+        
+        subcmd = args[0]
+        
+        if subcmd == "create":
+            if len(args) < 2:
+                console.print("[red]Usage: session create <title> [description][/red]")
+                return
+            title = args[1]
+            description = " ".join(args[2:]) if len(args) > 2 else ""
+            session = self.session_store.create(title, description)
+            console.print(f"[green]Created session: {session.session_id}[/green]")
+            console.print(f"Title: {session.title}")
+        
+        elif subcmd == "list":
+            sessions = self.session_store.list()
+            if not sessions:
+                console.print("[yellow]No sessions found[/yellow]")
+                return
+            
+            table = Table(title="Sessions")
+            table.add_column("ID", style="cyan", width=30)
+            table.add_column("Title", style="green")
+            table.add_column("Status", style="yellow", width=12)
+            table.add_column("Created", style="blue", width=20)
+            
+            for s in sessions:
+                table.add_row(s.session_id[-20:], s.title, s.status.value, s.created_at.strftime("%Y-%m-%d %H:%M"))
+            
+            console.print(table)
+        
+        elif subcmd == "show":
+            if len(args) < 2:
+                console.print("[red]Usage: session show <session_id>[/red]")
+                return
+            session_id = args[1]
+            session = self.session_store.get(session_id)
+            if not session:
+                console.print(f"[red]Session not found: {session_id}[/red]")
+                return
+            
+            console.print(Panel(
+                f"[bold]ID:[/bold] {session.session_id}\n"
+                f"[bold]Title:[/bold] {session.title}\n"
+                f"[bold]Description:[/bold] {session.description}\n"
+                f"[bold]Status:[/bold] {session.status.value}\n"
+                f"[bold]Type:[/bold] {session.session_type.value}\n"
+                f"[bold]Created:[/bold] {session.created_at}\n"
+                f"[bold]Updated:[/bold] {session.updated_at}\n"
+                f"[bold]Tags:[/bold] {', '.join(session.tags) if session.tags else 'None'}",
+                title="Session Details",
+                style="blue"
+            ))
+            
+            if session.events:
+                console.print("\n[bold]Timeline:[/bold]")
+                for event in sorted(session.events, key=lambda e: e.timestamp):
+                    console.print(f"  {event.timestamp.strftime('%H:%M:%S')} - {event.event_type}: {event.description}")
+        
+        elif subcmd == "switch":
+            if len(args) < 2:
+                console.print("[red]Usage: session switch <session_id>[/red]")
+                return
+            session_id = args[1]
+            if self.session_store.set_current(session_id):
+                console.print(f"[green]Switched to session: {session_id}[/green]")
+            else:
+                console.print(f"[red]Failed to switch session[/red]")
+        
+        elif subcmd == "archive":
+            if len(args) < 2:
+                console.print("[red]Usage: session archive <session_id>[/red]")
+                return
+            session_id = args[1]
+            session = self.session_store.get(session_id)
+            if session:
+                session.archive()
+                self.session_store.update(session_id, status=session.status)
+                console.print(f"[green]Archived session: {session_id}[/green]")
+            else:
+                console.print(f"[red]Session not found[/red]")
+        
+        elif subcmd == "search":
+            if len(args) < 2:
+                console.print("[red]Usage: session search <query>[/red]")
+                return
+            query = " ".join(args[1:])
+            results = self.session_store.search(query)
+            if not results:
+                console.print("[yellow]No sessions found[/yellow]")
+                return
+            
+            table = Table(title=f"Search Results for '{query}'")
+            table.add_column("ID", style="cyan", width=30)
+            table.add_column("Title", style="green")
+            table.add_column("Status", style="yellow", width=12)
+            
+            for s in results:
+                table.add_row(s.session_id[-20:], s.title, s.status.value)
+            
+            console.print(table)
+        
+        elif subcmd == "current":
+            session = self.session_store.get_current()
+            if session:
+                console.print(f"[green]Current session:[/green] {session.session_id} - {session.title}")
+            else:
+                console.print("[yellow]No current session[/yellow]")
+        
+        else:
+            console.print(f"[red]Unknown subcommand: {subcmd}[/red]")
+
+
+class ApprovalCommand(Command):
+    def __init__(self, approval_manager):
+        self.approval_manager = approval_manager
+
+    def name(self) -> str:
+        return "approval"
+
+    def description(self) -> str:
+        return "Approval management: approval <list/approve/reject/create>"
+
+    def execute(self, args: List[str]) -> Any:
+        if not args:
+            console.print("[red]Usage: approval <list/approve/reject/create>[/red]")
+            return
+        
+        subcmd = args[0]
+        
+        if subcmd == "list":
+            approvals = self.approval_manager.list_all()
+            if not approvals:
+                console.print("[yellow]No approvals found[/yellow]")
+                return
+            
+            table = Table(title="Approvals")
+            table.add_column("ID", style="cyan", width=30)
+            table.add_column("Decision", style="green", width=30)
+            table.add_column("Level", style="yellow", width=12)
+            table.add_column("Status", style="magenta", width=12)
+            table.add_column("Created", style="blue", width=20)
+            
+            for a in approvals:
+                table.add_row(a.approval_id[-20:], a.decision_id[-20:], a.level.value, a.status.value, a.created_at.strftime("%Y-%m-%d %H:%M"))
+            
+            console.print(table)
+        
+        elif subcmd == "pending":
+            approvals = self.approval_manager.list_pending()
+            if not approvals:
+                console.print("[green]No pending approvals[/green]")
+                return
+            
+            table = Table(title="Pending Approvals")
+            table.add_column("ID", style="cyan", width=30)
+            table.add_column("Summary", style="green")
+            table.add_column("Level", style="yellow", width=12)
+            table.add_column("Requested By", style="blue", width=15)
+            
+            for a in approvals:
+                table.add_row(a.approval_id[-20:], a.decision_summary[:40], a.level.value, a.requested_by)
+            
+            console.print(table)
+        
+        elif subcmd == "approve":
+            if len(args) < 2:
+                console.print("[red]Usage: approval approve <approval_id> [reason][/red]")
+                return
+            approval_id = args[1]
+            reason = " ".join(args[2:]) if len(args) > 2 else None
+            if self.approval_manager.approve(approval_id, reason=reason):
+                console.print(f"[green]Approved: {approval_id}[/green]")
+            else:
+                console.print(f"[red]Failed to approve[/red]")
+        
+        elif subcmd == "reject":
+            if len(args) < 2:
+                console.print("[red]Usage: approval reject <approval_id> [reason][/red]")
+                return
+            approval_id = args[1]
+            reason = " ".join(args[2:]) if len(args) > 2 else None
+            if self.approval_manager.reject(approval_id, reason=reason):
+                console.print(f"[red]Rejected: {approval_id}[/red]")
+            else:
+                console.print(f"[red]Failed to reject[/red]")
+        
+        elif subcmd == "create":
+            if len(args) < 3:
+                console.print("[red]Usage: approval create <decision_id> <summary> [level][/red]")
+                return
+            decision_id = args[1]
+            summary = args[2]
+            level = args[3] if len(args) > 3 else "low"
+            from core.approval import ApprovalLevel
+            try:
+                level_enum = ApprovalLevel(level)
+            except ValueError:
+                console.print(f"[red]Invalid level: {level}[/red]")
+                return
+            approval = self.approval_manager.create_approval(decision_id, summary, level_enum)
+            console.print(f"[green]Created approval: {approval.approval_id}[/green]")
+        
+        elif subcmd == "stats":
+            stats = self.approval_manager.get_statistics()
+            table = Table(title="Approval Statistics")
+            for key, value in stats.items():
+                table.add_row(key.replace("_", " ").title(), str(value))
+            console.print(table)
+        
+        else:
+            console.print(f"[red]Unknown subcommand: {subcmd}[/red]")
+
+
+class CompareCommand(Command):
+    def __init__(self, decision_engine):
+        self.decision_engine = decision_engine
+        from core.decision_card import DecisionCardRenderer, DecisionComparator
+        self.renderer = DecisionCardRenderer()
+        self.comparator = DecisionComparator()
+
+    def name(self) -> str:
+        return "compare"
+
+    def description(self) -> str:
+        return "Compare multiple decisions"
+
+    def execute(self, args: List[str]) -> Any:
+        if not args or len(args) < 2:
+            console.print("[red]Usage: compare <goal1> <goal2> [goal3...]")
+            return
+        
+        goals = args
+        
+        cards = []
+        for goal in goals:
+            context = {"goal": goal, "priority": "normal"}
+            options = [
+                {
+                    "option_id": "option_1",
+                    "name": "Quick Action",
+                    "description": "Fast but limited",
+                    "scores": {"outcome_value": 0.7, "risk_reduction": 0.5, "reversibility": 0.8, "confidence_alignment": 0.8},
+                },
+                {
+                    "option_id": "option_2",
+                    "name": "Comprehensive Action",
+                    "description": "Thorough analysis",
+                    "scores": {"outcome_value": 0.9, "risk_reduction": 0.7, "reversibility": 0.6, "confidence_alignment": 0.9},
+                },
+            ]
+            result = self.decision_engine.make_decision(context, options)
+            if result.status.value == "decided":
+                card = self.renderer.render_from_decision(result)
+                cards.append(card)
+        
+        if cards:
+            self.comparator.compare(cards)
+        else:
+            console.print("[red]No decisions to compare[/red]")
+
+
 class Shell:
     def __init__(self):
         self.commands: Dict[str, Command] = {}
@@ -384,6 +659,13 @@ class CLI:
         
         decide_parser = self.subparsers.add_parser("decide", help="Make a decision")
         decide_parser.add_argument("goal", nargs="+", help="Decision goal")
+        
+        self.subparsers.add_parser("session", help="Session management")
+        
+        self.subparsers.add_parser("approval", help="Approval management")
+        
+        compare_parser = self.subparsers.add_parser("compare", help="Compare decisions")
+        compare_parser.add_argument("goals", nargs="+", help="Goals to compare")
 
     def parse(self, args: Optional[List[str]] = None) -> argparse.Namespace:
         return self.parser.parse_args(args)
@@ -395,9 +677,13 @@ def main():
     
     from perception import LocalWorkspacePerceiver
     from core.decision_engine import DecisionEngine, DecisionPolicy, DecisionCriteria
+    from core.session import SessionStore
+    from core.approval import ApprovalManager
     
     perceiver = LocalWorkspacePerceiver()
     decision_engine = DecisionEngine()
+    session_store = SessionStore()
+    approval_manager = ApprovalManager()
     
     policy = DecisionPolicy(
         policy_id="default_policy",
@@ -424,10 +710,13 @@ def main():
         shell.register_command(GitDiffCommand(perceiver))
         shell.register_command(GitLogCommand(perceiver))
         shell.register_command(DecideCommand(decision_engine))
+        shell.register_command(SessionCommand(session_store))
+        shell.register_command(ApprovalCommand(approval_manager))
+        shell.register_command(CompareCommand(decision_engine))
         shell.run()
     
     elif args.command == "version":
-        console.print(Panel("Octopus v0.2.0", title="Version"))
+        console.print(Panel("Octopus v0.3.1", title="Version"))
     
     elif args.command == "read":
         result = perceiver.read_file(args.file_path)
@@ -507,6 +796,9 @@ def main():
             ))
         else:
             console.print(f"[red]Decision failed[/red]")
+    
+    elif args.command == "compare":
+        CompareCommand(decision_engine).execute(args.goals)
     
     else:
         cli.parser.print_help()
