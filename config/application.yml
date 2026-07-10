@@ -1,0 +1,15 @@
+llm:
+  # provider: openai | ollama | mock
+  provider: mock
+  
+  # model: gpt-4o, deepseek-chat, llama3, qwen, etc.
+  model: gpt-4o
+
+  # OpenAI configuration (only used if provider is openai)
+  openai:
+    api_key: "sk-your-api-key-here"
+    # base_url: "https://api.openai.com/v1" # Uncomment and change for custom endpoints (e.g. DeepSeek)
+    
+  # Ollama configuration (only used if provider is ollama)
+  ollama:
+    base_url: "http://localhost:11434"

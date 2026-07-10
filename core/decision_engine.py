@@ -229,6 +229,9 @@ class DecisionEngine:
         constraints: Optional[List[str]] = None,
         priority: DecisionPriority = DecisionPriority.NORMAL
     ) -> Decision:
+        import json
+        from core.llm_client import llm
+        
         decision_id = f"decision_{datetime.now().timestamp()}"
         
         criteria = self.active_policy.criteria if self.active_policy else self._get_default_criteria()
@@ -249,11 +252,57 @@ class DecisionEngine:
         
         if self.simulation_engine:
             decision = self._enrich_with_simulation(decision)
-        
-        decision.select_best_option()
-        
-        if decision.selected_option:
-            decision.reasoning = self._generate_reasoning(decision)
+            
+        # ==========================================
+        # SPICE-PATTERN: LLM Integration (Phase 2)
+        # ==========================================
+        try:
+            options_json = json.dumps([opt.to_dict() for opt in decision.options], indent=2)
+            context_json = json.dumps(context, indent=2)
+            
+            system_prompt = """
+You are the Brain/Decision Engine of the Octopus framework.
+Your task is to evaluate the provided Decision Options against the current World State (Context) and select the best one.
+You must output a strictly formatted JSON object:
+{
+    "selected_option_id": "the ID of the best option",
+    "reasoning": "detailed explanation of why this option is best, including trade-offs considered",
+    "confidence": 0.95
+}
+"""
+            prompt = f"WORLD STATE CONTEXT:\n{context_json}\n\nOPTIONS:\n{options_json}\n\nPlease evaluate and select the best option in JSON."
+            
+            # Using higher temperature for creative reasoning, following Spice pattern
+            response = llm.chat(
+                prompt=prompt, 
+                system_prompt=system_prompt, 
+                json_mode=True,
+                temperature=0.7
+            )
+            
+            llm_result = json.loads(response)
+            
+            selected_id = llm_result.get("selected_option_id")
+            selected_opt = next((opt for opt in decision.options if opt.option_id == selected_id), None)
+            
+            if selected_opt:
+                decision.selected_option = selected_opt
+                decision.reasoning = llm_result.get("reasoning", "LLM provided no reasoning.")
+                decision.confidence = float(llm_result.get("confidence", 0.5))
+                decision.status = DecisionStatus.DECIDED
+                decision.decided_at = datetime.now()
+            else:
+                # LLM hallucinated an invalid ID
+                print(f"[DecisionEngine] LLM returned invalid option_id: {selected_id}")
+                decision.status = DecisionStatus.FAILED
+                
+        except Exception as e:
+            print(f"[DecisionEngine] LLM Decision failed: {e}")
+            decision.status = DecisionStatus.FAILED
+            decision.reasoning = f"LLM Failure: {str(e)}"
+            
+        # Create execution intent if decided successfully
+        if decision.status == DecisionStatus.DECIDED and decision.selected_option:
             decision.create_execution_intent()
         
         self.decision_history.append(decision)

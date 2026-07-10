@@ -88,6 +88,9 @@ class PerceptionResult:
         }
 
 
+import json
+from core.llm_client import llm
+
 class IntentParser:
     def __init__(self):
         self.patterns: Dict[IntentType, List[Callable]] = {}
@@ -102,98 +105,65 @@ class IntentParser:
         self.entity_extractors[entity_type] = extractor
     
     def parse(self, content: str, context: Optional[Dict[str, Any]] = None) -> Intent:
-        intent_type = self._classify_intent(content, context)
-        parsed = self._parse_content(content, intent_type)
-        entities = self._extract_entities(content)
-        
+        # Prompt the LLM for intent extraction using JSON mode
+        system_prompt = f"""
+You are the Perception Module of the Octopus Decision Engine.
+Your job is to parse raw input and extract the user's intent into a structured JSON object.
+
+Valid IntentTypes: {[t.value for t in IntentType]}
+
+You must return ONLY a JSON object with this exact structure:
+{{
+    "intent_type": "<one of the Valid IntentTypes>",
+    "parsed_content": {{"action": "...", "target": "...", "parameters": {{}}}},
+    "entities": ["list of entities like emails, URLs, file paths, IDs"],
+    "confidence": 0.95
+}}
+"""
+        try:
+            response = llm.chat(
+                prompt=f"Raw Input: {content}\nContext: {context}", 
+                system_prompt=system_prompt,
+                json_mode=True
+            )
+            parsed_data = json.loads(response)
+            
+            # Map string intent_type back to Enum safely
+            intent_str = parsed_data.get("intent_type", "unknown")
+            try:
+                intent_type = IntentType(intent_str)
+            except ValueError:
+                intent_type = IntentType.UNKNOWN
+                
+            parsed_content = parsed_data.get("parsed_content", {"original": content})
+            entities = parsed_data.get("entities", [])
+            confidence = float(parsed_data.get("confidence", 0.8))
+            
+        except Exception as e:
+            # Fallback to simple heuristic if LLM fails (e.g. mock mode without JSON support)
+            print(f"[Perception] LLM intent extraction failed: {e}. Falling back to heuristics.")
+            intent_type = self._fallback_classify(content)
+            parsed_content = {"original": content, "error": str(e)}
+            entities = []
+            confidence = 0.5
+            
         return Intent(
             intent_id=f"intent_{datetime.now().timestamp()}",
             intent_type=intent_type,
             raw_content=content,
-            parsed_content=parsed,
+            parsed_content=parsed_content,
             entities=entities,
+            confidence=confidence,
             context=context or {},
         )
-    
-    def _classify_intent(
-        self, 
-        content: str, 
-        context: Optional[Dict[str, Any]]
-    ) -> IntentType:
+        
+    def _fallback_classify(self, content: str) -> IntentType:
         content_lower = content.lower()
-        
-        if context and context.get("source"):
-            source = context["source"]
-            if source == "webhook":
-                return IntentType.EXTERNAL_SIGNAL
-            elif source == "scheduler":
-                return IntentType.SCHEDULED_TASK
-            elif source == "monitor":
-                return IntentType.MONITORING_ALERT
-        
-        if any(kw in content_lower for kw in ["error", "failed", "exception", "crash"]):
-            return IntentType.ERROR_OBSERVATION
-        if any(kw in content_lower for kw in ["what", "how", "why", "where", "when"]):
-            return IntentType.QUERY
-        if any(kw in content_lower for kw in ["do", "execute", "run", "create", "delete", "update"]):
-            return IntentType.COMMAND
-        if any(kw in content_lower for kw in ["please", "can you", "i want", "need"]):
-            return IntentType.USER_REQUEST
-        
-        return IntentType.UNKNOWN
-    
-    def _parse_content(self, content: str, intent_type: IntentType) -> Dict[str, Any]:
-        parsed = {
-            "original": content,
-            "tokens": self._tokenize(content),
-            "intent_type": intent_type.value,
-        }
-        
-        if intent_type == IntentType.COMMAND:
-            parsed["action"] = self._extract_action(content)
-            parsed["target"] = self._extract_target(content)
-            parsed["parameters"] = self._extract_parameters(content)
-        
-        return parsed
-    
-    def _tokenize(self, text: str) -> List[str]:
-        return re.findall(r'\w+', text.lower())
-    
-    def _extract_action(self, content: str) -> Optional[str]:
-        actions = ["create", "read", "update", "delete", "execute", "run", "send", "fetch"]
-        tokens = self._tokenize(content)
-        for token in tokens:
-            if token in actions:
-                return token
-        return None
-    
-    def _extract_target(self, content: str) -> Optional[str]:
-        targets = ["file", "database", "api", "service", "user", "config", "report"]
-        tokens = self._tokenize(content)
-        for token in tokens:
-            if token in targets:
-                return token
-        return None
-    
-    def _extract_parameters(self, content: str) -> Dict[str, Any]:
-        params = {}
-        param_pattern = r'(\w+)=["\']([^"\']+)["\']'
-        matches = re.findall(param_pattern, content)
-        for key, value in matches:
-            params[key] = value
-        return params
-    
-    def _extract_entities(self, content: str) -> List[str]:
-        entities = []
-        email_pattern = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
-        url_pattern = r'https?://[^\s]+'
-        path_pattern = r'[A-Za-z]:\\[^\s]+|/[^\s]+'
-        
-        entities.extend(re.findall(email_pattern, content))
-        entities.extend(re.findall(url_pattern, content))
-        entities.extend(re.findall(path_pattern, content))
-        
-        return entities
+        if any(kw in content_lower for kw in ["error", "failed", "crash"]): return IntentType.ERROR_OBSERVATION
+        if any(kw in content_lower for kw in ["what", "how", "why"]): return IntentType.QUERY
+        if any(kw in content_lower for kw in ["do", "execute", "run"]): return IntentType.COMMAND
+        return IntentType.USER_REQUEST
+
 
 
 class PerceptionModule:

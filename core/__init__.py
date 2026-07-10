@@ -43,6 +43,12 @@ from core.ethics import (
     ValueSystem,
     EthicalPrinciple
 )
+from core.decision_card import (
+    DecisionCard,
+    DecisionCardOption,
+    DecisionCardRenderer,
+    OutputFormat,
+)
 
 __all__ = [
     "WorldModel",
@@ -74,4 +80,8 @@ __all__ = [
     "EthicsDecision",
     "ValueSystem",
     "EthicalPrinciple",
+    "DecisionCard",
+    "DecisionCardOption",
+    "DecisionCardRenderer",
+    "OutputFormat",
 ]

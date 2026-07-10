@@ -199,6 +199,7 @@ def demonstrate_decision_engine():
     
     options = [
         {
+            "option_id": "option_1",
             "name": "Quick Analysis",
             "description": "Fast but basic analysis",
             "actions": [
@@ -213,6 +214,7 @@ def demonstrate_decision_engine():
             "risk_level": 0.3,
         },
         {
+            "option_id": "option_2",
             "name": "Comprehensive Analysis",
             "description": "Detailed analysis with full metrics",
             "actions": [
@@ -368,12 +370,14 @@ def demonstrate_full_workflow():
     context = {"task": "quarterly_analysis", "priority": "high"}
     options = [
         {
+            "option_id": "option_1",
             "name": "Quick Report",
             "description": "Fast summary",
             "actions": [{"tool_id": "calculator", "parameters": {}}],
             "scores": {"outcome_value": 0.7, "risk_reduction": 0.5, "reversibility": 0.8, "confidence_alignment": 0.8},
         },
         {
+            "option_id": "option_2",
             "name": "Detailed Report",
             "description": "Comprehensive analysis",
             "actions": [{"tool_id": "data_fetcher", "parameters": {}}],
