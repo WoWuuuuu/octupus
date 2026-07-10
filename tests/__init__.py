@@ -1,3 +1,3 @@
 """
-Octopus Test Suite
+Octopus Examples
 """
