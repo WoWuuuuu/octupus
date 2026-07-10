@@ -3,7 +3,7 @@ Integration Tests for Octopus Complete Workflow
 """
 
 import pytest
-from octopus.core import (
+from core import (
     WorldModel,
     PerceptionModule,
     SimulationEngine,
@@ -14,8 +14,8 @@ from octopus.core import (
     DecisionCriteria,
     Entity,
 )
-from octopus.execution import ExecutionLayer, Tool, ToolMetadata
-from octopus.protocol import ODEPProtocol, ExecutionIntent, Priority
+from execution import ExecutionLayer, Tool, ToolMetadata
+from protocol import ODEPProtocol, ExecutionIntent, Priority
 
 
 class TestIntegration:

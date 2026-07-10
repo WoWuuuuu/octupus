@@ -6,21 +6,21 @@ Contains all components for the Decision Layer (Slow Thinking).
 
 
 
-from octopus.core.world_model import WorldModel, Entity, StateSnapshot
-from octopus.core.perception import (
+from core.world_model import WorldModel, Entity, StateSnapshot
+from core.perception import (
     PerceptionModule, 
     PerceptionResult, 
     Intent, 
     IntentType,
     SignalSource
 )
-from octopus.core.simulation import (
+from core.simulation import (
     SimulationEngine, 
     SimulationConfig, 
     Scenario, 
     SimulationResult
 )
-from octopus.core.decision_engine import (
+from core.decision_engine import (
     DecisionEngine, 
     Decision, 
     DecisionOption, 
@@ -28,13 +28,13 @@ from octopus.core.decision_engine import (
     DecisionPolicy,
     DecisionPriority
 )
-from octopus.core.memory import (
+from core.memory import (
     LongTermMemory, 
     MemoryItem, 
     MemoryType, 
     DecisionOutcome
 )
-from octopus.core.ethics import (
+from core.ethics import (
     EthicsFramework, 
     EthicalGuideline, 
     EthicalRule,

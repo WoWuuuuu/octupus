@@ -34,11 +34,11 @@ dev = [
 ]
 
 [project.scripts]
-octopus = "octopus.cli:main"
+octopus = "cli:main"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["octopus*"]
+include = ["core*", "execution*", "protocol*", "models*"]
 
 [tool.black]
 line-length = 100

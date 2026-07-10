@@ -6,14 +6,14 @@ project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
 import json
-from octopus.core import (
+from core import (
     WorldModel,
     PerceptionModule,
     DecisionEngine,
     LongTermMemory,
 )
-from octopus.execution import ExecutionLayer
-from octopus.protocol import ExecutionIntent, Priority
+from execution import ExecutionLayer
+from protocol import ExecutionIntent, Priority
 
 
 def run_demo():

@@ -171,9 +171,15 @@ class LongTermMemory:
         memory_type: MemoryType = MemoryType.EPISODIC,
         context: Optional[Dict[str, Any]] = None,
         tags: Optional[List[str]] = None,
-        relevance: MemoryRelevance = MemoryRelevance.MEDIUM,
+        relevance: Any = MemoryRelevance.MEDIUM,
         ttl_days: Optional[int] = None
     ) -> MemoryItem:
+        if isinstance(relevance, (int, float)):
+            try:
+                relevance = MemoryRelevance(float(relevance))
+            except ValueError:
+                relevance = min(MemoryRelevance, key=lambda x: abs(x.value - float(relevance)))
+
         memory_id = f"mem_{datetime.now().timestamp()}_{len(self.memories)}"
         
         expiration = None
@@ -257,7 +263,7 @@ class LongTermMemory:
         
         candidates.sort(
             key=lambda m: (
-                m.relevance.value,
+                m.relevance.value if isinstance(m.relevance, MemoryRelevance) else float(m.relevance),
                 m.access_count,
                 m.created_at
             ),

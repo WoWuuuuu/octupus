@@ -4,7 +4,7 @@ Tests for Octopus Decision Layer Components
 
 import pytest
 from datetime import datetime
-from octopus.core import (
+from core import (
     WorldModel,
     PerceptionModule,
     SimulationEngine,
@@ -138,7 +138,7 @@ class TestSimulationEngine:
     
     def test_scenario_variants(self):
         engine = SimulationEngine()
-        from octopus.core.simulation import Scenario
+        from core.simulation import Scenario
         
         base_scenario = Scenario(
             scenario_id="base",
@@ -153,7 +153,7 @@ class TestSimulationEngine:
     
     def test_compare_scenarios(self):
         engine = SimulationEngine()
-        from octopus.core.simulation import Scenario
+        from core.simulation import Scenario
         
         scenarios = [
             Scenario(

@@ -1,4 +1,3 @@
-你想做什么？ decide 我应该先写代码还是先吃饭
 import sys
 from pathlib import Path
 
@@ -6,7 +5,7 @@ project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
 import json
-from octopus.core import (
+from core import (
     WorldModel,
     PerceptionModule,
     SimulationEngine,
@@ -14,8 +13,8 @@ from octopus.core import (
     LongTermMemory,
     EthicsFramework,
 )
-from octopus.execution import ExecutionLayer
-from octopus.protocol import ExecutionIntent, Priority
+from execution import ExecutionLayer
+from protocol import ExecutionIntent, Priority
 
 
 def run_demo():

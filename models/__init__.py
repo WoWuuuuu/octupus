@@ -5,7 +5,7 @@ This package contains all Pydantic models used for communication
 between the Decision Brain and Execution Tentacles.
 """
 
-from octopus.models.core_models import (
+from models.core_models import (
     # Enums
     TaskPriority,
     TaskStatus,

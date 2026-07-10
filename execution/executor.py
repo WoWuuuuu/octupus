@@ -10,13 +10,13 @@ from typing import Any, Dict, List, Optional, Callable
 from datetime import datetime
 from enum import Enum
 
-from octopus.protocol.communication import (
+from protocol.communication import (
     ExecutionIntent,
     ExecutionResult,
     ExecutionStatus,
     ODEPProtocol
 )
-from octopus.execution.tools import ToolRegistry, Tool, ToolExecution
+from execution.tools import ToolRegistry, Tool, ToolExecution
 
 
 class ExecutionState(Enum):

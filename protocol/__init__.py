@@ -4,7 +4,7 @@ Octopus Protocol - Communication Protocol Components
 ODEP (Octopus Decision Execution Protocol) for layer communication.
 """
 
-from octopus.protocol.communication import (
+from protocol.communication import (
     ODEPProtocol,
     ODEPMessage,
     MessageType,

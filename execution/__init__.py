@@ -4,7 +4,7 @@ Octopus Execution Layer - Fast Thinking Components
 Contains all components for the Execution Layer (Fast Thinking).
 """
 
-from octopus.execution.tools import (
+from execution.tools import (
     ToolRegistry,
     Tool,
     ToolMetadata,
@@ -16,7 +16,7 @@ from octopus.execution.tools import (
     create_data_retrieval_tool,
 )
 
-from octopus.execution.executor import (
+from execution.executor import (
     ExecutionLayer,
     ExecutionPlan,
     ExecutionTask,

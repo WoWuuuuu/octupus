@@ -4,7 +4,7 @@ Tests for Octopus Execution Layer Components
 
 import pytest
 from datetime import datetime
-from octopus.execution import (
+from execution import (
     ExecutionLayer,
     ToolRegistry,
     Tool,
@@ -15,7 +15,7 @@ from octopus.execution import (
     ExecutionPlan,
     ExecutionState,
 )
-from octopus.protocol import (
+from protocol import (
     ODEPProtocol,
     ExecutionIntent,
     ExecutionResult,
@@ -353,7 +353,7 @@ class TestODEPProtocol:
     def test_send_state_update(self):
         protocol = ODEPProtocol()
         
-        from octopus.protocol import WorldStateUpdate
+        from protocol import WorldStateUpdate
         
         update = WorldStateUpdate(
             state_type="entity_update",

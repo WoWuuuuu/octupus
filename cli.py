@@ -7,7 +7,7 @@ Provides command-line interface for interacting with Octopus.
 import sys
 import json
 from typing import Optional, Dict, Any
-from octopus.core import (
+from core import (
     WorldModel,
     PerceptionModule,
     SimulationEngine,
@@ -15,8 +15,8 @@ from octopus.core import (
     LongTermMemory,
     EthicsFramework,
 )
-from octopus.execution import ExecutionLayer, ToolRegistry
-from octopus.protocol import ODEPProtocol, ExecutionIntent, Priority
+from execution import ExecutionLayer, ToolRegistry
+from protocol import ODEPProtocol, ExecutionIntent, Priority
 
 
 class OctopusCLI:

@@ -8,7 +8,7 @@ import sys
 import os
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from octopus.core import (
+from core import (
     WorldModel,
     PerceptionModule,
     SimulationEngine,
@@ -20,8 +20,8 @@ from octopus.core import (
     EthicsFramework,
     Entity,
 )
-from octopus.execution import ExecutionLayer, Tool, ToolMetadata
-from octopus.protocol import ExecutionIntent, Priority
+from execution import ExecutionLayer, Tool, ToolMetadata
+from protocol import ExecutionIntent, Priority
 
 
 def create_llm_tool():

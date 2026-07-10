@@ -4,7 +4,7 @@ Simple Example: Using Octopus Programmatically
 A basic example showing how to use Octopus components.
 """
 
-from octopus.core import (
+from core import (
     WorldModel,
     PerceptionModule,
     SimulationEngine,
@@ -12,8 +12,8 @@ from octopus.core import (
     DecisionPolicy,
     DecisionCriteria,
 )
-from octopus.execution import ExecutionLayer, Tool, ToolMetadata
-from octopus.protocol import ExecutionIntent, Priority
+from execution import ExecutionLayer, Tool, ToolMetadata
+from protocol import ExecutionIntent, Priority
 
 
 def simple_example():

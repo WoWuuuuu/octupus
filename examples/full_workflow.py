@@ -4,7 +4,7 @@ Example: Complete Octopus Workflow
 Demonstrates the complete Decision-Execution Layer workflow.
 """
 
-from octopus.core import (
+from core import (
     WorldModel,
     PerceptionModule,
     SimulationEngine,
@@ -18,8 +18,8 @@ from octopus.core import (
     EthicsFramework,
     Entity,
 )
-from octopus.execution import ExecutionLayer, ToolRegistry, Tool, ToolMetadata
-from octopus.protocol import ODEPProtocol, ExecutionIntent, Priority
+from execution import ExecutionLayer, ToolRegistry, Tool, ToolMetadata
+from protocol import ODEPProtocol, ExecutionIntent, Priority
 
 
 def create_example_tools():
