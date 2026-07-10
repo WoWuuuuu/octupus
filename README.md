@@ -4,7 +4,7 @@
 
 ## 📦 版本
 
-**v0.4** - 完成阶段三：多执行器集成、多LLM提供商支持、感知轮询、系统诊断工具、项目脚手架
+**v1.0.0** - 正式发布版本，包含完整的决策-执行层分离架构、多执行器集成、多LLM提供商支持、感知轮询、系统诊断工具和项目脚手架
 
 ## 核心架构
 
@@ -53,23 +53,38 @@
 
 ## 快速开始
 
-### 安装
+### 方式一：一键运行（推荐）
 
 ```bash
+# 克隆项目
+git clone https://github.com/WoWuuuuu/octupus.git
+cd octupus
+
+# 一键运行
+python run_octopus.py
+```
+
+### 方式二：安装开发环境
+
+```bash
+# 安装依赖
 pip install -e .
+
+# 运行交互式CLI
+octopus shell
 ```
 
-### 运行示例
+### 方式三：运行示例
 
 ```bash
+# 完整工作流演示
 python demo/full_workflow_demo.py
+
+# 简单演示
+python demo/simple_workflow_demo.py
 ```
 
-### 使用CLI
-
-```bash
-python -m octopus.cli shell
-```
+详细的入门指引请查看 [docs/QUICKSTART_GUIDE.md](docs/QUICKSTART_GUIDE.md)
 
 ## CLI 命令
 

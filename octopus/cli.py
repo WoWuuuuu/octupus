@@ -71,7 +71,7 @@ class VersionCommand(Command):
         return "Show Octopus version"
 
     def execute(self, args: List[str]) -> Any:
-        console.print(Panel("Octopus v0.2.0\n\nDecision-Execution Framework", title="Version"))
+        console.print(Panel("Octopus v1.0.0\n\nDecision-Execution Framework", title="Version"))
 
 
 class ReadFileCommand(Command):
@@ -593,7 +593,7 @@ class Shell:
 
     def run(self):
         console.print(Panel(
-            "Octopus Interactive Shell\n"
+            "Octopus v1.0.0 Interactive Shell\n"
             "Type 'help' for available commands\n"
             "Type 'exit' to quit",
             title="Welcome",
@@ -716,7 +716,7 @@ def main():
         shell.run()
     
     elif args.command == "version":
-        console.print(Panel("Octopus v0.3.1", title="Version"))
+        console.print(Panel("Octopus v1.0.0", title="Version"))
     
     elif args.command == "read":
         result = perceiver.read_file(args.file_path)
