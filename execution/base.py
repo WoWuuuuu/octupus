@@ -9,6 +9,7 @@ class ExecutorType(Enum):
     LOCAL = "local"
     REMOTE = "remote"
     DOCKER = "docker"
+    AGENT = "agent"
     KUBERNETES = "kubernetes"
     LAMBDA = "lambda"
 

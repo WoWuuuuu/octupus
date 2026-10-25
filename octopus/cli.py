@@ -303,6 +303,146 @@ class DecideCommand(Command):
             console.print(f"[red]Decision failed: {result.reasoning}[/red]")
 
 
+class AgentCommand(Command):
+    def __init__(self, harness=None):
+        from execution.harness import CliAgentHarness
+        self.harness = harness or CliAgentHarness()
+
+    def name(self) -> str:
+        return "agent"
+
+    def description(self) -> str:
+        return "External CLI agents: agent <list/run>"
+
+    def execute(self, args: List[str]) -> Any:
+        subcmd = args[0] if args else "list"
+
+        if subcmd == "list":
+            table = Table(title="CLI Agents")
+            table.add_column("Agent", style="cyan")
+            table.add_column("Executable", style="green")
+            table.add_column("Available", style="yellow")
+            table.add_column("Notes", style="white")
+            for item in self.harness.discover():
+                table.add_row(
+                    item["agent_id"],
+                    item["executable"],
+                    "yes" if item["available"] else "no",
+                    item["notes"],
+                )
+            console.print(table)
+            return
+
+        if subcmd == "run":
+            rest = args[1:]
+            execute = "--execute" in rest
+            rest = [a for a in rest if a != "--execute"]
+
+            if len(rest) < 2:
+                console.print("[red]Usage: agent run <agent_id> <prompt> [--execute][/red]")
+                return
+
+            agent_id = rest[0]
+            prompt = " ".join(rest[1:])
+
+            try:
+                result = self.harness.run(agent_id, prompt, dry_run=not execute)
+            except KeyError as exc:
+                console.print(f"[red]{exc}[/red]")
+                return
+
+            console.print(Panel(
+                f"[bold]Agent:[/bold] {result.agent_id}\n"
+                f"[bold]Protocol:[/bold] {result.protocol_status}\n"
+                f"[bold]Task:[/bold] {result.task_status}\n"
+                f"[bold]Dry run:[/bold] {result.dry_run}",
+                title="Agent Run",
+                style="blue",
+            ))
+            console.print("[bold]Command:[/bold] " + " ".join(result.command))
+            if result.error:
+                console.print(f"[red]Error: {result.error}[/red]")
+            if result.stdout:
+                console.print(Panel(result.stdout, title="stdout"))
+            if result.stderr:
+                console.print(Panel(result.stderr, title="stderr"))
+            return
+
+        console.print("[red]Usage: agent <list/run>[/red]")
+
+
+class DecisionGuidanceCommand(Command):
+    def __init__(self, decision_engine=None):
+        self.decision_engine = decision_engine
+
+    def name(self) -> str:
+        return "decision"
+
+    def description(self) -> str:
+        return "Decision guidance: decision <init/show>"
+
+    def execute(self, args: List[str]) -> Any:
+        from core.decision_guidance import (
+            init_decision_guidance,
+            load_decision_guidance,
+        )
+
+        subcmd = args[0] if args else "show"
+
+        if subcmd == "init":
+            force = "--force" in args
+            try:
+                path = init_decision_guidance(force=force)
+                console.print(f"[green]Created decision guidance: {path}[/green]")
+            except FileExistsError as exc:
+                console.print(f"[yellow]{exc}[/yellow]")
+            return
+
+        guidance = load_decision_guidance()
+        if guidance is None:
+            console.print(
+                "[yellow]No decision.md found. Run 'decision init' to create one.[/yellow]"
+            )
+            return
+
+        render_guidance(guidance)
+
+
+def render_guidance(guidance) -> None:
+    console.print(Panel(
+        f"[bold]Path:[/bold] {guidance.path}\n"
+        f"[bold]Primary Objective:[/bold] {guidance.primary_objective or '(未设置)'}",
+        title="Decision Guidance",
+        style="blue",
+    ))
+
+    if guidance.weights:
+        table = Table(title="Preferences / Weights (runtime-active)")
+        table.add_column("Dimension", style="cyan")
+        table.add_column("Weight", style="green")
+        for name, weight in guidance.weights.items():
+            table.add_row(name, f"{weight:.2f}")
+        console.print(table)
+
+    if guidance.hard_constraints:
+        console.print("[bold]Hard Constraints:[/bold]")
+        for item in guidance.hard_constraints:
+            console.print(f"  - {item}")
+
+    if guidance.trade_off_rules:
+        console.print("[bold]Trade-off Rules:[/bold]")
+        for item in guidance.trade_off_rules:
+            console.print(f"  - {item}")
+
+    warnings = guidance.validate()
+    if warnings:
+        console.print("[yellow]Warnings:[/yellow]")
+        for warning in warnings:
+            console.print(f"  - {warning}")
+    else:
+        console.print("[green]Validation passed[/green]")
+
+
 class SessionCommand(Command):
     def __init__(self, session_store):
         self.session_store = session_store
@@ -667,6 +807,13 @@ class CLI:
         compare_parser = self.subparsers.add_parser("compare", help="Compare decisions")
         compare_parser.add_argument("goals", nargs="+", help="Goals to compare")
 
+        decision_parser = self.subparsers.add_parser("decision", help="Decision guidance (decision.md)")
+        decision_parser.add_argument("action", nargs="?", default="show", choices=["init", "show"], help="init | show")
+        decision_parser.add_argument("--force", action="store_true", help="Overwrite existing decision.md")
+
+        agent_parser = self.subparsers.add_parser("agent", help="External CLI agents")
+        agent_parser.add_argument("args", nargs="*", help="list | run <agent_id> <prompt> [--execute]")
+
     def parse(self, args: Optional[List[str]] = None) -> argparse.Namespace:
         return self.parser.parse_args(args)
 
@@ -697,6 +844,11 @@ def main():
         ],
     )
     decision_engine.add_policy(policy)
+
+    from core.decision_guidance import load_decision_guidance
+    guidance = load_decision_guidance()
+    if guidance is not None:
+        decision_engine.set_decision_guidance(guidance)
     
     if args.command == "shell":
         shell = Shell()
@@ -713,6 +865,8 @@ def main():
         shell.register_command(SessionCommand(session_store))
         shell.register_command(ApprovalCommand(approval_manager))
         shell.register_command(CompareCommand(decision_engine))
+        shell.register_command(DecisionGuidanceCommand(decision_engine))
+        shell.register_command(AgentCommand())
         shell.run()
     
     elif args.command == "version":
@@ -799,6 +953,13 @@ def main():
     
     elif args.command == "compare":
         CompareCommand(decision_engine).execute(args.goals)
+
+    elif args.command == "decision":
+        extra = ["--force"] if getattr(args, "force", False) else []
+        DecisionGuidanceCommand(decision_engine).execute([args.action] + extra)
+
+    elif args.command == "agent":
+        AgentCommand().execute(args.args)
     
     else:
         cli.parser.print_help()

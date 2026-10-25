@@ -480,3 +480,17 @@ class ExecutorManager:
         executor = DockerExecutor(config)
         self.register_executor(executor)
         return executor
+
+    def create_agent_executor(self, executor_id: str, name: str = "", description: str = ""):
+        """Register an executor that drives external CLI agents."""
+        from execution.agent_executor import CliAgentExecutor
+
+        config = ExecutorConfig(
+            executor_id=executor_id,
+            executor_type=ExecutorType.AGENT,
+            name=name or "CLI Agent Executor",
+            description=description or "Runs external CLI agents (Claude Code, Codex, ...)",
+        )
+        executor = CliAgentExecutor(config)
+        self.register_executor(executor)
+        return executor

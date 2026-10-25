@@ -53,7 +53,7 @@ class LLMClient:
     ) -> str:
         """
         Send a chat completion request to the configured LLM provider.
-        Supports dynamic parameter overrides (the Spice pattern).
+        Supports dynamic parameter overrides.
         """
         if self.provider == "mock":
             return self._mock_chat(prompt, json_mode)

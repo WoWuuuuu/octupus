@@ -186,6 +186,7 @@ octopus/
 │   ├── decision_card.py   # 决策卡片渲染
 │   ├── session.py         # 会话管理系统
 │   ├── approval.py        # 批准机制
+│   ├── decision_guidance.py # 决策指导文件（decision.md）加载
 │   └── llm_provider.py    # LLM提供商抽象与实现
 ├── perception/             # 工作区感知模块
 │   ├── __init__.py
@@ -194,7 +195,9 @@ octopus/
 ├── execution/             # 执行器模块
 │   ├── __init__.py
 │   ├── base.py            # 执行器抽象接口
-│   └── executors.py       # 多种执行器实现
+│   ├── executors.py       # 多种执行器实现
+│   ├── harness.py         # 外部 Agent 驱动层（harness）
+│   └── agent_executor.py  # CLI Agent 执行器适配
 ├── protocol/              # 通信协议
 │   ├── __init__.py
 │   └── v1/                # ODEP v1.0协议

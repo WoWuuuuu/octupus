@@ -25,6 +25,7 @@
 - **关键方法**：
   - `make_decision(context, options) -> Decision`：做出决策
   - `add_policy(policy)`：添加决策策略
+  - `set_decision_guidance(guidance)`：挂载 decision.md 指导，权重转为生效策略
 
 ### 🛡️ EthicsFramework (伦理与风控框架)
 - **职责**：审查动作是否违背商业或安全红线。
@@ -54,6 +55,16 @@
 - **关键方法**：
   - `compare(cards, format)`：对比多个决策卡片
   - `_generate_summary(cards)`：生成对比摘要
+
+### 🧭 DecisionGuidance (决策指导)
+- **职责**：加载并解析人类可读的 `decision.md`，把其中的目标、权重、硬约束、取舍规则映射为决策策略，并注入 LLM 决策提示。
+- **查找顺序**：`.octopus/decision.md` → `decision.md`
+- **关键方法**：
+  - `load_decision_guidance(workspace)`：自动查找并加载指导文件
+  - `init_decision_guidance(target_dir, force)`：生成模板
+  - `to_policy()` / `to_criteria()`：映射为决策策略与评价标准
+  - `to_prompt()`：渲染为 LLM 提示块
+  - `validate()`：返回校验提示（缺少目标/权重、权重未归一化等）
 
 ### 📝 Session (会话管理系统)
 - **职责**：管理决策会话的生命周期，支持创建、切换、归档、搜索、时间线等功能。
@@ -170,8 +181,24 @@
 - **关键方法**：
   - `execute_in_container(command)`：在容器中执行命令
 
+### 🧰 CliAgentHarness (外部 Agent 驱动层)
+- **职责**：把外部 CLI Agent（Claude Code、Codex 等）当作黑盒驱动起来——拼命令、喂提示词、控超时、收结果。
+- **关键方法**：
+  - `run(agent_id, prompt, workspace, timeout_seconds, dry_run)`：执行一次调用（默认 dry_run）
+  - `build_command(profile, prompt)`：组装命令行
+  - `discover()` / `is_available(agent_id)`：列出已知 Agent 及本机可用性
+  - `register_profile(profile)`：注册自定义 Agent
+- **两级状态**：`protocol_status`（是否成功送出并拿回响应）+ `task_status`（任务是否办成）
+
+### 🤝 CliAgentExecutor (CLI Agent 执行器)
+- **职责**：把 harness 适配成标准执行器，暴露 `agent_run` / `agent_list` 两个工具。
+- **关键方法**：
+  - `execute("agent_run", {agent_id, prompt, dry_run, ...})`：调用外部 Agent
+  - `execute("agent_list", {})`：列出 Agent 与可用性
+  - `health_check()`：报告本机可用的 Agent 列表
+
 ### 数据结构
-- **ExecutorType**: LOCAL, REMOTE, DOCKER
+- **ExecutorType**: LOCAL, REMOTE, DOCKER, AGENT
 - **ExecutorStatus**: STOPPED, RUNNING, PAUSED, ERROR
 - **ExecutorConfig**: 包含executor_id、executor_type、host、port、timeout等。
 - **ExecutionJob**: 包含job_id、intent_id、executor_id、status、result等。

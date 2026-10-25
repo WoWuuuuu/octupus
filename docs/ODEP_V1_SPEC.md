@@ -3,7 +3,6 @@
 ## 文档信息
 - **版本**: v1.0
 - **创建日期**: 2026-07-10
-- **对标**: Spice SDEP v0.1
 - **状态**: 进行中
 
 ---
@@ -12,7 +11,7 @@
 
 1. [协议概述](#一协议概述)
 2. [消息类型定义](#二消息类型定义)
-3. [与Spice SDEP的对比分析](#三与spice-sdep的对比分析)
+3. [ODEP v1.0 增强项](#三odep-v10-增强项)
 4. [JSON Schema定义](#四json-schema定义)
 5. [传输层设计](#五传输层设计)
 6. [向后兼容性](#六向后兼容性)
@@ -23,7 +22,7 @@
 
 ### 1.1 设计目标
 
-ODEP (Octopus Decision Execution Protocol) v1.0 是一个用于决策层与执行层之间通信的标准化协议，对标Spice的SDEP协议，具备以下设计目标：
+ODEP (Octopus Decision Execution Protocol) v1.0 是一个用于决策层与执行层之间通信的标准化协议，具备以下设计目标：
 
 1. **传输无关**: 支持多种传输方式（stdin/stdout、HTTP、队列、RPC）
 2. **协议优先**: 外部执行器无需了解Octopus内部实现
@@ -148,51 +147,7 @@ class ApprovalStatus(Enum):
 
 ---
 
-## 三、与Spice SDEP的对比分析
-
-### 3.1 SDEP消息结构分析
-
-**SDEP核心消息类型：**
-
-| 消息类型 | SDEP字段 | ODEP对应 | 差距 |
-|---------|---------|---------|------|
-| execute.request | intent_id, action, context, constraints | intent_id, action_type, parameters, constraints | 字段命名差异 |
-| execute.response | intent_id, status, output, error | intent_id, status, output, error | 基本一致 |
-| decision.request | goal, context, options | 新增 | 需要新增 |
-| decision.response | decision_id, selected, reasoning | 新增 | 需要新增 |
-| approval.request | approval_id, intent, context | 新增 | 需要新增 |
-| approval.response | approval_id, status, reason | 新增 | 需要新增 |
-
-### 3.2 字段级差距分析
-
-**ExecutionIntent字段对比：**
-
-| SDEP字段 | SDEP类型 | ODEP字段 | ODEP类型 | 状态 |
-|---------|---------|---------|---------|------|
-| intent_id | string | intent_id | string | ✅一致 |
-| action | string | action_type | string | ✅一致 |
-| context | object | parameters | object | ✅等价 |
-| constraints | array[string] | constraints | array[string] | ✅一致 |
-| timeout | number | timeout_seconds | int | ✅等价 |
-| priority | string | priority | Priority | ✅增强 |
-| rollback_plan | object | rollback_plan | object | ✅一致 |
-| metadata | object | metadata | object | ✅一致 |
-| created_at | string | created_at | datetime | ✅一致 |
-
-**ExecutionResult字段对比：**
-
-| SDEP字段 | SDEP类型 | ODEP字段 | ODEP类型 | 状态 |
-|---------|---------|---------|---------|------|
-| intent_id | string | intent_id | string | ✅一致 |
-| status | string | status | ExecutionStatus | ✅增强 |
-| output | any | output | any | ✅一致 |
-| error | string | error | string | ✅一致 |
-| execution_time_ms | number | execution_time_ms | float | ✅一致 |
-| partial_results | array | partial_results | array[any] | ✅一致 |
-| metadata | object | metadata | object | ✅一致 |
-| completed_at | string | completed_at | datetime | ✅一致 |
-
-### 3.3 ODEP v1.0增强项
+## 三、ODEP v1.0 增强项
 
 1. **协议版本化**: 新增`protocol_version`字段
 2. **执行状态扩展**: 新增`PARTIAL`状态支持部分成功

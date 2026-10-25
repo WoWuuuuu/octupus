@@ -38,6 +38,19 @@ from execution.executors import (
     ExecutorManager,
 )
 
+from execution.harness import (
+    AgentProfile,
+    HarnessResult,
+    CliAgentHarness,
+    BUILTIN_PROFILES,
+)
+
+from execution.agent_executor import (
+    CliAgentExecutor,
+    TOOL_AGENT_RUN,
+    TOOL_AGENT_LIST,
+)
+
 __all__ = [
     "ToolRegistry",
     "Tool",
@@ -61,4 +74,11 @@ __all__ = [
     "RemoteExecutor",
     "DockerExecutor",
     "ExecutorManager",
+    "AgentProfile",
+    "HarnessResult",
+    "CliAgentHarness",
+    "BUILTIN_PROFILES",
+    "CliAgentExecutor",
+    "TOOL_AGENT_RUN",
+    "TOOL_AGENT_LIST",
 ]

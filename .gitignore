@@ -140,3 +140,6 @@ Thumbs.db
 
 # Project specific
 *.log
+
+# Agent / tooling local state
+.workbuddy-ai/

@@ -28,6 +28,12 @@ from core.decision_engine import (
     DecisionPolicy,
     DecisionPriority
 )
+from core.decision_guidance import (
+    DecisionGuidance,
+    load_decision_guidance,
+    init_decision_guidance,
+    DEFAULT_DECISION_GUIDANCE,
+)
 from core.memory import (
     LongTermMemory, 
     MemoryItem, 
@@ -83,6 +89,10 @@ __all__ = [
     "DecisionCriteria",
     "DecisionPolicy",
     "DecisionPriority",
+    "DecisionGuidance",
+    "load_decision_guidance",
+    "init_decision_guidance",
+    "DEFAULT_DECISION_GUIDANCE",
     "LongTermMemory",
     "MemoryItem",
     "MemoryType",

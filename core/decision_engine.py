@@ -203,6 +203,7 @@ class DecisionEngine:
         self.decision_history: List[Decision] = []
         self.simulation_engine = None
         self.world_model = None
+        self.decision_guidance = None
         self.decision_callbacks: List[Callable] = []
     
     def set_simulation_engine(self, engine):
@@ -210,6 +211,15 @@ class DecisionEngine:
     
     def set_world_model(self, world_model):
         self.world_model = world_model
+
+    def set_decision_guidance(self, guidance):
+        """Attach a parsed decision.md artifact and apply its weights as a policy."""
+        self.decision_guidance = guidance
+        if guidance is not None and getattr(guidance, "weights", None):
+            self.add_policy(guidance.to_policy())
+
+    def clear_decision_guidance(self):
+        self.decision_guidance = None
     
     def add_policy(self, policy: DecisionPolicy):
         self.policies[policy.policy_id] = policy
@@ -236,6 +246,11 @@ class DecisionEngine:
         
         criteria = self.active_policy.criteria if self.active_policy else self._get_default_criteria()
         hard_constraints = self.active_policy.hard_constraints if self.active_policy else []
+
+        if self.active_policy is None and self.decision_guidance is not None:
+            if getattr(self.decision_guidance, "weights", None):
+                criteria = self.decision_guidance.to_criteria()
+                hard_constraints = list(self.decision_guidance.hard_constraints)
         
         decision = Decision(
             decision_id=decision_id,
@@ -245,6 +260,14 @@ class DecisionEngine:
             criteria=criteria,
             constraints=constraints or [],
         )
+
+        if self.decision_guidance is not None:
+            decision.metadata["decision_guidance"] = {
+                "path": self.decision_guidance.path,
+                "primary_objective": self.decision_guidance.primary_objective,
+                "weights": self.decision_guidance.weights,
+                "hard_constraints": self.decision_guidance.hard_constraints,
+            }
         
         for option_data in options:
             option = self._create_option(option_data, criteria, hard_constraints)
@@ -254,25 +277,35 @@ class DecisionEngine:
             decision = self._enrich_with_simulation(decision)
             
         # ==========================================
-        # SPICE-PATTERN: LLM Integration (Phase 2)
+        # LLM Integration (Phase 2)
         # ==========================================
         try:
             options_json = json.dumps([opt.to_dict() for opt in decision.options], indent=2)
             context_json = json.dumps(context, indent=2)
             
-            system_prompt = """
+            guidance_block = ""
+            if self.decision_guidance is not None:
+                rendered = self.decision_guidance.to_prompt()
+                if rendered:
+                    guidance_block = (
+                        "\n\nDECISION GUIDANCE (decision.md):\n"
+                        f"{rendered}\n"
+                        "Apply this guidance when comparing and selecting options.\n"
+                    )
+
+            system_prompt = f"""
 You are the Brain/Decision Engine of the Octopus framework.
 Your task is to evaluate the provided Decision Options against the current World State (Context) and select the best one.
 You must output a strictly formatted JSON object:
-{
+{{
     "selected_option_id": "the ID of the best option",
     "reasoning": "detailed explanation of why this option is best, including trade-offs considered",
     "confidence": 0.95
-}
+}}{guidance_block}
 """
             prompt = f"WORLD STATE CONTEXT:\n{context_json}\n\nOPTIONS:\n{options_json}\n\nPlease evaluate and select the best option in JSON."
             
-            # Using higher temperature for creative reasoning, following Spice pattern
+            # Using higher temperature for creative reasoning
             response = llm.chat(
                 prompt=prompt, 
                 system_prompt=system_prompt, 

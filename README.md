@@ -19,12 +19,14 @@
 - **Approval Mechanism**: 批准机制
 - **Decision Card**: 决策卡片渲染
 - **Decision Comparator**: 决策比较功能
+- **Decision Guidance**: 决策指导文件（decision.md）
 
 ### 执行层（Fast Thinking - 快速思考）
 - **Tool Registry**: 工具注册和管理
 - **Execution Layer**: 纯工具执行
 - **ODEP Protocol**: 层间通信协议
 - **Executors**: 多执行器支持（本地、远程、Docker）
+- **CLI Agent Harness**: 外部 Agent 驱动层（Claude Code、Codex 等）
 - **LLM Providers**: 多LLM提供商支持（OpenAI、Anthropic、Google）
 
 ### 通信协议
@@ -108,6 +110,18 @@ python demo/simple_workflow_demo.py
 | `decide <goal>` | 做出决策 |
 | `compare <goal1> <goal2> [...]` | 对比多个决策 |
 
+### 决策指导
+| 命令 | 说明 |
+|------|------|
+| `decision init [--force]` | 生成 `.octopus/decision.md` 模板 |
+| `decision show` | 查看并校验当前决策指导 |
+
+### 外部 Agent
+| 命令 | 说明 |
+|------|------|
+| `agent list` | 列出已知 Agent 及本机是否安装 |
+| `agent run <agent_id> <prompt> [--execute]` | 调用外部 Agent（默认 dry-run） |
+
 ### 会话管理
 | 命令 | 说明 |
 |------|------|
@@ -155,6 +169,57 @@ python demo/simple_workflow_demo.py
 | `version` | 显示版本 |
 | `help` | 显示帮助 |
 | `exit` | 退出CLI |
+
+## 决策指导（decision.md）
+
+Octopus 支持一份人类可读的**决策指导文件**，用来声明「决策应该如何被评价和选择」：
+优化目标、评分权重、硬约束、取舍规则。
+
+```bash
+# 生成模板（默认写入 .octopus/decision.md）
+octopus decision init
+
+# 查看并校验
+octopus decision show
+```
+
+文件按以下顺序自动查找：`.octopus/decision.md` → `decision.md`。
+存在时，其中的权重会变成生效的决策策略，并注入到 LLM 决策提示中。
+
+```python
+from core.decision_engine import DecisionEngine
+from core.decision_guidance import load_decision_guidance
+
+engine = DecisionEngine()
+guidance = load_decision_guidance()
+if guidance:
+    engine.set_decision_guidance(guidance)
+
+decision = engine.make_decision(context, options)
+```
+
+详细规范见 [docs/DECISION_GUIDANCE.md](docs/DECISION_GUIDANCE.md)。
+
+## 外部 Agent（CLI Agent Harness）
+
+Octopus 通过一层 **harness（驱动层）** 调用外部 CLI Agent，把决策结果转交出去：
+
+```bash
+octopus agent list                 # 看本机装了哪些 Agent
+octopus agent run claude_code "把 README 里的错别字修一下"            # 默认 dry-run
+octopus agent run claude_code "把 README 里的错别字修一下" --execute  # 真执行
+```
+
+```python
+from execution.harness import CliAgentHarness
+
+harness = CliAgentHarness()
+result = harness.run("claude_code", "修 README 错别字", dry_run=False)
+print(result.protocol_status, result.task_status)
+```
+
+结果分两级状态：`protocol_status`（有没有把任务送出去并拿回响应）和 `task_status`（Agent 有没有把事办成）。
+真实执行默认关闭，需显式开启。详见 [docs/AGENT_HARNESS.md](docs/AGENT_HARNESS.md)。
 
 ## 核心组件
 
@@ -264,6 +329,7 @@ octopus/
 │   ├── decision_card.py   # 决策卡片渲染
 │   ├── session.py         # 会话管理系统
 │   ├── approval.py        # 批准机制
+│   ├── decision_guidance.py # 决策指导文件（decision.md）加载
 │   └── llm_provider.py    # LLM提供商抽象与实现
 ├── perception/             # 工作区感知模块
 │   ├── __init__.py
@@ -272,7 +338,9 @@ octopus/
 ├── execution/             # 执行器模块
 │   ├── __init__.py
 │   ├── base.py            # 执行器抽象接口
-│   └── executors.py       # 多种执行器实现
+│   ├── executors.py       # 多种执行器实现
+│   ├── harness.py         # 外部 Agent 驱动层（harness）
+│   └── agent_executor.py  # CLI Agent 执行器适配
 ├── protocol/              # 通信协议
 │   ├── __init__.py
 │   └── v1/                # ODEP v1.0协议
@@ -289,6 +357,7 @@ octopus/
 │   └── quickstart.py     # 项目脚手架
 ├── demo/                  # 示例脚本
 ├── tests/                 # 测试用例
+├── .octopus/              # 决策指导（decision.md）
 ├── docs/                  # 文档
 └── config/                # 配置文件
 ```
